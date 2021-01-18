@@ -13,9 +13,13 @@ import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.net.SocketException;
 import java.net.UnknownHostException;
+import java.sql.Time;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
+import java.time.Clock;
+import java.time.LocalDateTime;
 import java.util.Date;
+import java.util.Random;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.JOptionPane;
@@ -31,19 +35,21 @@ public class Cliente extends javax.swing.JFrame {
     /* Instantiate client socket. 
     No need to bind to a specific port */
     public DatagramSocket clientSocket = new DatagramSocket();
-
+    public int millisInDay = 24*60*60*1000;
+    //public String ip = "192.168.0.195";
     // Get the IP address of the server
     public InetAddress IPAddress = InetAddress.getByName("192.168.0.173");
     // Creating corresponding buffers
     public byte[] sendingDataBuffer = new byte[1024];
     public byte[] receivingDataBuffer = new byte[1024];
     Timer updateTimer;
-    int DELAY = 100;
+    int DELAY = 1;
     
     public Cliente() throws SocketException, UnknownHostException, IOException {
         initComponents();
-        
-        JOptionPane.showMessageDialog(rootPane, "Welcome to the library");
+        //Random random = new Random();
+        //long time = ((long)random.nextInt(millisInDay));
+        //Date currentTime = new Date(time);
         /* Converting data to bytes and 
         storing them in the sending buffer */
         String sentence = "INICIO";
@@ -70,11 +76,12 @@ public class Cliente extends javax.swing.JFrame {
         updateTimer = new Timer(DELAY, new ActionListener(){
             @Override
             public void actionPerformed(ActionEvent e){
-                Date currentTime = new Date();
-                String formatTimeStr = "hh:mm:ss";
-                DateFormat formatTime = new SimpleDateFormat(formatTimeStr);
-                String formattedTimeStr = formatTime.format(currentTime);
-                displayClock.setText(formattedTimeStr);
+                LocalDateTime localDateTimeUTC = LocalDateTime.now(Clock.systemUTC());
+                LocalDateTime localDateTime = LocalDateTime.now();
+                String tiempoUTC = localDateTimeUTC.toString().substring(10, localDateTimeUTC.toString().length());
+                String tiempoLocal = localDateTime.toString().substring(10, localDateTime.toString().length());
+                utcTime.setText("UTC: " + tiempoUTC);
+                localTime.setText("LOCAL: "+tiempoLocal);
             }
         });
         
@@ -93,22 +100,18 @@ public class Cliente extends javax.swing.JFrame {
     private void initComponents() {
 
         jLabel1 = new javax.swing.JLabel();
-        jLabel2 = new javax.swing.JLabel();
         jPanel1 = new javax.swing.JPanel();
         jButton1 = new javax.swing.JButton();
-        jScrollPane1 = new javax.swing.JScrollPane();
-        jTextArea1 = new javax.swing.JTextArea();
         jPanel2 = new javax.swing.JPanel();
-        jScrollPane2 = new javax.swing.JScrollPane();
-        jTextArea2 = new javax.swing.JTextArea();
-        displayClock = new javax.swing.JLabel();
+        utcTime = new javax.swing.JLabel();
+        btnReset = new javax.swing.JButton();
+        requested = new javax.swing.JLabel();
+        localTime = new javax.swing.JLabel();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
         setResizable(false);
 
         jLabel1.setText("Requested book");
-
-        jLabel2.setText("Available books");
 
         jButton1.setFont(new java.awt.Font("Ubuntu", 0, 18)); // NOI18N
         jButton1.setText("ASK FOR A BOOK");
@@ -128,29 +131,34 @@ public class Cliente extends javax.swing.JFrame {
         );
         jPanel1Layout.setVerticalGroup(
             jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(jButton1, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+            .addComponent(jButton1, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, 100, Short.MAX_VALUE)
         );
-
-        jTextArea1.setColumns(20);
-        jTextArea1.setRows(5);
-        jScrollPane1.setViewportView(jTextArea1);
-
-        jTextArea2.setColumns(20);
-        jTextArea2.setRows(5);
-        jScrollPane2.setViewportView(jTextArea2);
 
         javax.swing.GroupLayout jPanel2Layout = new javax.swing.GroupLayout(jPanel2);
         jPanel2.setLayout(jPanel2Layout);
         jPanel2Layout.setHorizontalGroup(
             jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(jScrollPane2)
+            .addGap(0, 291, Short.MAX_VALUE)
         );
         jPanel2Layout.setVerticalGroup(
             jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(jScrollPane2, javax.swing.GroupLayout.DEFAULT_SIZE, 104, Short.MAX_VALUE)
+            .addGap(0, 104, Short.MAX_VALUE)
         );
 
-        displayClock.setText("CLOCK");
+        utcTime.setText("CLOCK");
+
+        btnReset.setText("RESET");
+        btnReset.setEnabled(false);
+        btnReset.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btnResetActionPerformed(evt);
+            }
+        });
+
+        requested.setFont(new java.awt.Font("Ubuntu", 0, 24)); // NOI18N
+        requested.setText("-----");
+
+        localTime.setText("jLabel2");
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
@@ -159,40 +167,50 @@ public class Cliente extends javax.swing.JFrame {
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(jLabel1)
-                    .addComponent(jLabel2)
                     .addGroup(layout.createSequentialGroup()
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING, false)
-                            .addComponent(jPanel2, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                            .addComponent(jScrollPane1, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, 291, Short.MAX_VALUE))
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(jPanel2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(jLabel1))
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addGroup(layout.createSequentialGroup()
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addGap(31, 31, 31)
                                 .addComponent(jPanel1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                             .addGroup(layout.createSequentialGroup()
-                                .addGap(133, 133, 133)
-                                .addComponent(displayClock)))))
-                .addContainerGap(49, Short.MAX_VALUE))
+                                .addGap(111, 111, 111)
+                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                    .addComponent(localTime)
+                                    .addComponent(utcTime))))
+                        .addContainerGap(24, Short.MAX_VALUE))
+                    .addGroup(layout.createSequentialGroup()
+                        .addComponent(requested, javax.swing.GroupLayout.PREFERRED_SIZE, 322, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addComponent(btnReset, javax.swing.GroupLayout.PREFERRED_SIZE, 105, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addGap(101, 101, 101))))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
-                .addContainerGap()
-                .addComponent(jLabel1)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                    .addComponent(jPanel1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 100, Short.MAX_VALUE))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 38, Short.MAX_VALUE)
-                .addComponent(jLabel2)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(layout.createSequentialGroup()
+                        .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addComponent(btnReset, javax.swing.GroupLayout.PREFERRED_SIZE, 37, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addGroup(layout.createSequentialGroup()
+                        .addGap(30, 30, 30)
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(jPanel1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(jLabel1))
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addComponent(requested, javax.swing.GroupLayout.PREFERRED_SIZE, 57, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
                         .addComponent(jPanel2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addGap(6, 6, 6))
                     .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                        .addComponent(displayClock)
-                        .addGap(60, 60, 60))))
+                        .addComponent(utcTime)
+                        .addGap(43, 43, 43)
+                        .addComponent(localTime)
+                        .addContainerGap())))
         );
 
         pack();
@@ -201,8 +219,10 @@ public class Cliente extends javax.swing.JFrame {
     private void jButton1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton1ActionPerformed
         // Una vez dado este boton se hace una peticion de libro al servidor
         //Pedir libros-disponibles, libro seleccionado.
+        String receivedData = "";
         
         try{
+            
             /* Instantiate client socket. 
             No need to bind to a specific port */
             DatagramSocket clientSocket = new DatagramSocket();
@@ -232,11 +252,17 @@ public class Cliente extends javax.swing.JFrame {
             clientSocket.receive(receivingPacket);
 
             // Printing the received data
-            String receivedData = new String(receivingPacket.getData());
+            receivedData = new String(receivingPacket.getData());
             System.out.println("Libro recibido "+receivedData);
-
+            this.requested.setText(receivedData.toUpperCase().toString());
             // Closing the socket connection with the server
             clientSocket.close();
+            if(receivedData.contains("AGOTADO")){
+                JOptionPane.showMessageDialog(rootPane, "WE ARE SORRY NO BOOKS LEFT"
+                        + "\nIF YOU WANT TO RESET, CLICK DE RESET BUTTON"
+                        + "\nIN OTHER CASE JUST CLOSE THE WINDOW");
+                this.btnReset.setEnabled(true);
+            }
           }catch(SocketException e) {
                 e.printStackTrace();
           } catch (UnknownHostException ex) {
@@ -244,7 +270,57 @@ public class Cliente extends javax.swing.JFrame {
         } catch (IOException ex) {
             Logger.getLogger(Cliente.class.getName()).log(Level.SEVERE, null, ex);
         }
+        
     }//GEN-LAST:event_jButton1ActionPerformed
+
+    private void btnResetActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnResetActionPerformed
+        // TODO add your handling code here:
+        try{
+            
+            /* Instantiate client socket. 
+            No need to bind to a specific port */
+            DatagramSocket clientSocket = new DatagramSocket();
+
+            // Get the IP address of the server
+            InetAddress IPAddress = InetAddress.getByName("192.168.0.173");
+
+            // Creating corresponding buffers
+            byte[] sendingDataBuffer = new byte[1024];
+            byte[] receivingDataBuffer = new byte[1024];
+
+            /* Converting data to bytes and 
+            storing them in the sending buffer */
+            
+            
+            String sentence = "RESET";
+            sendingDataBuffer = sentence.getBytes();
+
+            // Creating a UDP packet 
+            DatagramPacket sendingPacket = new DatagramPacket(sendingDataBuffer,sendingDataBuffer.length,IPAddress, SERVICE_PORT);
+
+            // sending UDP packet to the server
+            clientSocket.send(sendingPacket);
+
+            // Get the server response .i.e. capitalized sentence
+            DatagramPacket receivingPacket = new DatagramPacket(receivingDataBuffer,receivingDataBuffer.length);
+            clientSocket.receive(receivingPacket);
+
+            // Printing the received data
+            String receivedData = new String(receivingPacket.getData());
+            System.out.println("CONFIRMACION DE RESET: "+receivedData);
+            this.requested.setText(receivedData.toUpperCase().toString());
+            // Closing the socket connection with the server
+            clientSocket.close();
+            
+          }catch(SocketException e) {
+                e.printStackTrace();
+          } catch (UnknownHostException ex) {
+            Logger.getLogger(Cliente.class.getName()).log(Level.SEVERE, null, ex);
+        } catch (IOException ex) {
+            Logger.getLogger(Cliente.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        this.btnReset.setEnabled(false);
+    }//GEN-LAST:event_btnResetActionPerformed
 
     /**
      * @param args the command line arguments
@@ -257,15 +333,13 @@ public class Cliente extends javax.swing.JFrame {
     }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    private javax.swing.JLabel displayClock;
+    private javax.swing.JButton btnReset;
     private javax.swing.JButton jButton1;
     private javax.swing.JLabel jLabel1;
-    private javax.swing.JLabel jLabel2;
     private javax.swing.JPanel jPanel1;
     private javax.swing.JPanel jPanel2;
-    private javax.swing.JScrollPane jScrollPane1;
-    private javax.swing.JScrollPane jScrollPane2;
-    private javax.swing.JTextArea jTextArea1;
-    private javax.swing.JTextArea jTextArea2;
+    private javax.swing.JLabel localTime;
+    private javax.swing.JLabel requested;
+    private javax.swing.JLabel utcTime;
     // End of variables declaration//GEN-END:variables
 }
