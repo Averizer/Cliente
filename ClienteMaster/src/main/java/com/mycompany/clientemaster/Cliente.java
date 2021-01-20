@@ -32,13 +32,14 @@ import javax.swing.Timer;
 public class Cliente extends javax.swing.JFrame {
     
     public final static int SERVICE_PORT = 10000;
+    public final static String SERVICE_HOST = "127.0.0.1";
     /* Instantiate client socket. 
     No need to bind to a specific port */
     public DatagramSocket clientSocket = new DatagramSocket();
     public int millisInDay = 24*60*60*1000;
     //public String ip = "192.168.0.195";
     // Get the IP address of the server
-    public InetAddress IPAddress = InetAddress.getByName("192.168.0.173");
+    public InetAddress IPAddress = InetAddress.getByName(SERVICE_HOST);
     // Creating corresponding buffers
     public byte[] sendingDataBuffer = new byte[1024];
     public byte[] receivingDataBuffer = new byte[1024];
@@ -228,7 +229,7 @@ public class Cliente extends javax.swing.JFrame {
             DatagramSocket clientSocket = new DatagramSocket();
 
             // Get the IP address of the server
-            InetAddress IPAddress = InetAddress.getByName("192.168.0.173");
+            InetAddress IPAddress = InetAddress.getByName(SERVICE_HOST);
 
             // Creating corresponding buffers
             byte[] sendingDataBuffer = new byte[1024];
@@ -282,7 +283,7 @@ public class Cliente extends javax.swing.JFrame {
             DatagramSocket clientSocket = new DatagramSocket();
 
             // Get the IP address of the server
-            InetAddress IPAddress = InetAddress.getByName("192.168.0.173");
+            InetAddress IPAddress = InetAddress.getByName(SERVICE_HOST);
 
             // Creating corresponding buffers
             byte[] sendingDataBuffer = new byte[1024];
@@ -327,9 +328,6 @@ public class Cliente extends javax.swing.JFrame {
      */
     public static void main(String args[]) throws UnknownHostException, IOException {
         new Cliente().setVisible(true);
-        
-     
-        
     }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
